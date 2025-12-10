@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Event Planner – Нэвтрэх систем</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+<div class="container">
+    <h1>Нэвтрэх систем</h1>
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <button class="tab active" data-tab="login">Нэвтрэх</button>
+        <button class="tab" data-tab="register">Бүртгүүлэх</button>
+    </div>
+
+    <!-- Login tab -->
+    <div id="login" class="tab-content active">
+        <div id="login-message" class="message hidden"></div>
+
+        <input type="email" id="login-email" placeholder="Имэйл">
+        <input type="password" id="login-password" placeholder="Нууц үг">
+
+        <button id="login-btn">Нэвтрэх</button>
+    </div>
+
+    <!-- Register tab -->
+    <div id="register" class="tab-content">
+        <div id="register-message" class="message hidden"></div>
+
+        <input type="email" id="register-email" placeholder="Имэйл">
+        <input type="password" id="register-password" placeholder="Нууц үг">
+
+        <button id="register-btn">Бүртгүүлэх</button>
+    </div>
+
+    <!-- Logged-in panel -->
+    <div id="dashboard" class="hidden">
+        <h2>Тавтай морил!</h2>
+        <p id="user-email"></p>
+
+        <h3>Нэвтрэх түүх</h3>
+        <ul id="history"></ul>
+
+        <button id="logout-btn">Гарах</button>
+    </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
