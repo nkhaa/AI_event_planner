@@ -1,91 +1,90 @@
-import hashlib
-import sqlite3
-from src.db import DB_PATH
-from src.errors import ValidationError, NotFoundError
+# src/auth.py
+from flask import request, jsonify, session
+from src.db import get_db
+from werkzeug.security import generate_password_hash, check_password_hash
+import re
 
-PHONE_MIN_LENGTH = 6
-PHONE_MAX_LENGTH = 15
+def is_valid_identifier(identifier):
+    """Validate email or phone number"""
+    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    phone_pattern = r'^[0-9]{8,11}$'
+    
+    return re.match(email_pattern, identifier) or re.match(phone_pattern, identifier)
 
-
-def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
-
-
-def _detect_identifier(identifier: str):
-    """Return tuple(kind, normalized_identifier)."""
-    if not isinstance(identifier, str) or not identifier.strip():
-        raise ValidationError("Имэйл эсвэл утас оруулна уу.")
-
-    identifier = identifier.strip()
-    if "@" in identifier:
-        return "email", identifier.lower()
-
-    # Basic phone validation: digits with optional + prefix
-    normalized = identifier.replace(" ", "").replace("-", "")
-    if normalized.startswith("+"):
-        normalized_digits = normalized[1:]
-    else:
-        normalized_digits = normalized
-
-    if not normalized_digits.isdigit():
-        raise ValidationError("Утасны дугаарыг зөв оруулна уу.")
-    if not (PHONE_MIN_LENGTH <= len(normalized_digits) <= PHONE_MAX_LENGTH):
-        raise ValidationError("Утасны дугаарын урт буруу байна.")
-
-    # store with + if provided
-    return "phone", normalized if normalized.startswith("+") else normalized_digits
-
-
-def register(identifier: str, password: str):
-    kind, value = _detect_identifier(identifier)
-
-    hashed = hash_password(password)
-
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
+def register_user():
+    data = request.json
+    
+    if not data.get("identifier") or not data.get("password"):
+        return jsonify({"error": "Бүх талбарыг бөглөнө үү"}), 400
+    
+    if not is_valid_identifier(data["identifier"]):
+        return jsonify({"error": "И-мэйл эсвэл утасны дугаар буруу байна"}), 400
+    
+    if len(data["password"]) < 6:
+        return jsonify({"error": "Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой"}), 400
+    
+    conn = get_db()
+    cur = conn.cursor()
 
     try:
-        cursor.execute(
-            "INSERT INTO users (identifier, kind, password) VALUES (?, ?, ?)",
-            (value, kind, hashed),
+        hashed_password = generate_password_hash(data["password"])
+        cur.execute(
+            "INSERT INTO users(identifier, password, user_type) VALUES (?,?,?)",
+            (data["identifier"], hashed_password, data.get("user_type", "user"))
         )
         conn.commit()
-    except sqlite3.IntegrityError:
-        raise ValidationError("Энэ бүртгэл аль хэдийн үүссэн байна.")
-    finally:
-        conn.close()
+        
+        # Auto login after registration
+        user_id = cur.lastrowid
+        session['user_id'] = user_id
+        session['identifier'] = data["identifier"]
+        session['user_type'] = data.get("user_type", "user")
+        
+        return jsonify({
+            "status": "ok",
+            "user_id": user_id,
+            "user_type": session['user_type']
+        })
+    except Exception as e:
+        return jsonify({"error": "Энэ и-мэйл эсвэл утасны дугаар аль хэдийн бүртгэлтэй байна"}), 400
 
-    return {"identifier": value, "kind": kind, "status": "registered"}
+def login_user():
+    data = request.json
+    
+    if not data.get("identifier") or not data.get("password"):
+        return jsonify({"error": "Бүх талбарыг бөглөнө үү"}), 400
+    
+    conn = get_db()
+    cur = conn.cursor()
 
-
-def login(identifier: str, password: str):
-    kind, value = _detect_identifier(identifier)
-    hashed = hash_password(password)
-
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    cursor.execute(
-        "SELECT password FROM users WHERE identifier = ? AND kind = ?",
-        (value, kind),
+    cur.execute(
+        "SELECT * FROM users WHERE identifier=?",
+        (data["identifier"],)
     )
-    row = cursor.fetchone()
 
-    if not row:
-        conn.close()
-        raise NotFoundError("Хэрэглэгч олдсонгүй")
+    user = cur.fetchone()
+    
+    if user and check_password_hash(user["password"], data["password"]):
+        session['user_id'] = user["id"]
+        session['identifier'] = user["identifier"]
+        session['user_type'] = user["user_type"]
+        
+        return jsonify({
+            "status": "ok",
+            "user_type": user["user_type"]
+        })
+    
+    return jsonify({"error": "И-мэйл эсвэл нууц үг буруу байна"}), 401
 
-    correct_hash = row[0]
-    success = 1 if correct_hash == hashed else 0
+def logout_user():
+    session.clear()
+    return jsonify({"status": "ok"})
 
-    cursor.execute(
-        "INSERT INTO login_history (identifier, success) VALUES (?, ?)",
-        (value, success)
-    )
-    conn.commit()
-    conn.close()
-
-    if success == 0:
-        raise ValidationError("Нууц үг буруу.")
-
-    return {"identifier": value, "kind": kind, "status": "logged_in"}
+def get_current_user():
+    if 'user_id' in session:
+        return {
+            "user_id": session['user_id'],
+            "identifier": session['identifier'],
+            "user_type": session['user_type']
+        }
+    return None

@@ -1,199 +1,645 @@
 <!DOCTYPE html>
 <html lang="mn">
 <head>
-    <meta charset="UTF-8">
-    <title>AI Event Planner | Нэвтрэх</title>
+  <meta charset="UTF-8" />
+  <title>AI Event Planner | Нэвтрэх</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-    <link rel="stylesheet" href="/static/output.css">
+    :root {
+      --primary: #f97316;
+      --primary-dark: #ea580c;
+      --secondary: #fbbf24;
+      --dark: #0c1222;
+      --dark-soft: #1a2332;
+      --dark-lighter: #2a3442;
+      --light: #f8fafc;
+      --text-light: #cbd5e1;
+      --text-lighter: #94a3b8;
+    }
 
-    <style>
-        .tab.active {
-            border-bottom-width: 2px;
-            border-color: rgb(99 102 241); /* indigo-500 */
-            font-weight: 600;
-        }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-    </style>
+    /* Light theme colors */
+    [data-theme="light"] {
+      --dark: #f8fafc;
+      --dark-soft: #ffffff;
+      --dark-lighter: #f1f5f9;
+      --light: #0f172a;
+      --text-light: #334155;
+      --text-lighter: #64748b;
+    }
+
+    body {
+      font-family: 'Source Sans Pro', sans-serif;
+      background: var(--dark);
+      color: var(--light);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow-x: hidden;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* Animated background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: 
+        radial-gradient(circle at 20% 30%, rgba(249, 115, 22, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(251, 191, 36, 0.1) 0%, transparent 50%);
+      animation: rotate 30s linear infinite;
+      z-index: 0;
+    }
+
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Particles effect */
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: rgba(249, 115, 22, 0.4);
+      border-radius: 50%;
+      animation: float 15s infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(-100vh) translateX(50px); opacity: 0; }
+    }
+
+    .container {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 480px;
+      padding: 20px;
+    }
+
+    .card {
+      background: rgba(26, 35, 50, 0.7);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(249, 115, 22, 0.2);
+      border-radius: 24px;
+      padding: 48px 40px;
+      box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      animation: slideUp 0.8s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .logo h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 42px;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+      letter-spacing: -1px;
+    }
+
+    .logo p {
+      color: var(--text-lighter);
+      font-size: 15px;
+      font-weight: 300;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 32px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 6px;
+      border-radius: 12px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 12px 20px;
+      background: transparent;
+      border: none;
+      color: var(--text-lighter);
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'Source Sans Pro', sans-serif;
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
+    }
+
+    .tab:hover:not(.active) {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--light);
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .input {
+      width: 100%;
+      padding: 16px 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(249, 115, 22, 0.2);
+      border-radius: 12px;
+      color: var(--light);
+      font-size: 15px;
+      font-family: 'Source Sans Pro', sans-serif;
+      transition: all 0.3s ease;
+    }
+
+    .input:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+    }
+
+    .input::placeholder {
+      color: var(--text-lighter);
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .checkbox {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      accent-color: var(--primary);
+    }
+
+    .checkbox-label {
+      color: var(--text-light);
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 16px 24px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'Source Sans Pro', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(249, 115, 22, 0.5);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .error-message {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 20px;
+      animation: shake 0.5s ease;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-8px); }
+      75% { transform: translateX(8px); }
+    }
+
+    .success-message {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: #86efac;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 24px 0;
+      color: var(--text-lighter);
+      font-size: 14px;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .info-text {
+      text-align: center;
+      color: var(--text-lighter);
+      font-size: 13px;
+      margin-top: 20px;
+    }
+
+    .info-text a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .info-text a:hover {
+      text-decoration: underline;
+    }
+
+    /* Theme toggle */
+    .theme-toggle {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      width: 48px;
+      height: 48px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(249, 115, 22, 0.2);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      transition: all 0.3s ease;
+      z-index: 1000;
+    }
+
+    .theme-toggle:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: var(--primary);
+      transform: rotate(180deg);
+    }
+
+    /* Loading animation */
+    .btn.loading {
+      position: relative;
+      color: transparent;
+      pointer-events: none;
+    }
+
+    .btn.loading::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      top: 50%;
+      left: 50%;
+      margin: -10px 0 0 -10px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 640px) {
+      .card {
+        padding: 32px 24px;
+      }
+      
+      .logo h1 {
+        font-size: 36px;
+      }
+    }
+  </style>
 </head>
 
-<body class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-100 flex items-center justify-center">
+<body>
 
-<div class="w-full max-w-5xl mx-auto px-6">
-    <div class="grid lg:grid-cols-2 gap-12 items-center">
+<button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+  <span id="theme-icon">🌙</span>
+</button>
 
-        <!-- LEFT SIDE (INFO) -->
-        <div class="space-y-6">
-            <span class="inline-flex items-center px-4 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-sm font-medium">
-                AI Event Planner
-            </span>
+<div class="particles" id="particles"></div>
 
-            <h1 class="text-4xl font-bold leading-tight text-white">
-                Ухаалгаар <span class="text-indigo-400">төлөвлө</span>,  
-                <br>илүү хурдан шийд.
-            </h1>
-
-            <p class="text-slate-300 text-lg">
-                Имэйл эсвэл утасны дугаараар нэвтэрч, бүх арга хэмжээгээ нэг дороос удирдаарай.
-            </p>
-
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center font-bold text-indigo-300">
-                    AI
-                </div>
-                <div>
-                    <p class="font-semibold text-white">Ухаалаг систем</p>
-                    <p class="text-slate-400 text-sm">Нэвтрэлт, түүх, хэрэглэгчийн удирдлага</p>
-                </div>
-            </div>
-
-            <div class="grid sm:grid-cols-2 gap-3">
-                <button data-tab-jump="register" class="rounded-xl bg-indigo-500/20 border border-indigo-400/30 px-4 py-3 text-left hover:border-indigo-300 hover:-translate-y-0.5 transition">
-                    <p class="text-white font-semibold">Шинэ хэрэглэгч</p>
-                    <p class="text-slate-300 text-sm">Имэйл эсвэл утсаар бүртгүүлнэ</p>
-                </button>
-                <button data-tab-jump="provider" class="rounded-xl bg-emerald-500/15 border border-emerald-400/30 px-4 py-3 text-left hover:border-emerald-300 hover:-translate-y-0.5 transition">
-                    <p class="text-white font-semibold">Үйлчилгээ үзүүлэгч</p>
-                    <p class="text-slate-300 text-sm">Танхим, үйлчилгээ бүртгүүлэх</p>
-                </button>
-            </div>
-        </div>
-
-        <!-- RIGHT SIDE (AUTH CARD) -->
-        <div class="bg-white/10 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8">
-
-            <!-- Tabs -->
-            <div class="flex border-b border-white/10 mb-6">
-                <button type="button" class="tab active flex-1 py-3 text-center text-white" data-tab="login">Нэвтрэх</button>
-                <button type="button" class="tab flex-1 py-3 text-center text-slate-300" data-tab="register">Хэрэглэгч бүртгүүлэх</button>
-                <button type="button" class="tab flex-1 py-3 text-center text-slate-300" data-tab="provider">Үйлчилгээ бүртгүүлэх</button>
-            </div>
-
-            <!-- LOGIN -->
-            <div id="login" class="tab-content active space-y-4">
-                <div id="login-message" class="hidden text-sm rounded-md px-4 py-2"></div>
-
-                <div>
-                    <label class="text-sm text-slate-300">Имэйл эсвэл утас</label>
-                    <input id="login-identifier" type="text"
-                        placeholder="example@mail.com эсвэл +976..."
-                        class="mt-1 w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                </div>
-
-                <div>
-                    <label class="text-sm text-slate-300">Нууц үг</label>
-                    <input id="login-password" type="password"
-                        placeholder="••••••••"
-                        class="mt-1 w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                </div>
-
-                <button type="button" id="login-btn"
-                    class="w-full mt-2 py-3 rounded-lg bg-indigo-500 hover:bg-indigo-600 font-semibold transition-transform hover:scale-[1.02] active:scale-[0.98]">
-                    Нэвтрэх
-                </button>
-            </div>
-
-            <!-- USER REGISTER -->
-            <div id="register" class="tab-content space-y-4">
-                <div id="register-message" class="hidden text-sm rounded-md px-4 py-2"></div>
-
-                <div>
-                    <label class="text-sm text-slate-300">Имэйл эсвэл утас</label>
-                    <input id="register-identifier" type="text"
-                        placeholder="example@mail.com эсвэл +976..."
-                        class="mt-1 w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                </div>
-
-                <div>
-                    <label class="text-sm text-slate-300">Нууц үг</label>
-                    <input id="register-password" type="password"
-                        placeholder="••••••••"
-                        class="mt-1 w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                </div>
-
-                <button type="button" id="register-btn"
-                    class="w-full mt-2 py-3 rounded-lg bg-emerald-500 hover:bg-emerald-600 font-semibold transition-transform hover:scale-[1.02] active:scale-[0.98]">
-                    Бүртгүүлэх
-                </button>
-            </div>
-
-            <!-- PROVIDER REGISTER -->
-            <div id="provider" class="tab-content space-y-4">
-                <div id="provider-message" class="hidden text-sm rounded-md px-4 py-2"></div>
-
-                <div class="grid grid-cols-1 gap-3">
-                    <div>
-                        <label class="text-sm text-slate-300">Байгууллагын нэр</label>
-                        <input id="p-name" type="text" placeholder="Royal Event Hall"
-                            class="mt-1 w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 placeholder-slate-400 focus:ring-2 focus:ring-emerald-500 outline-none transition">
-                    </div>
-                    <div class="grid sm:grid-cols-2 gap-3">
-                        <div>
-                            <label class="text-sm text-slate-300">Хүчин чадал</label>
-                            <input id="p-capacity" type="number" placeholder="200"
-                                class="mt-1 w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 placeholder-slate-400 focus:ring-2 focus:ring-emerald-500 outline-none transition">
-                        </div>
-                        <div>
-                            <label class="text-sm text-slate-300">Үнэ (₮)</label>
-                            <input id="p-price" type="number" placeholder="1500000"
-                                class="mt-1 w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 placeholder-slate-400 focus:ring-2 focus:ring-emerald-500 outline-none transition">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-sm text-slate-300">Багц / нэмэлт үйлчилгээ (сонголттой)</label>
-                        <input id="p-packages" type="text" placeholder="Gold, Silver..."
-                            class="mt-1 w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 placeholder-slate-400 focus:ring-2 focus:ring-emerald-500 outline-none transition">
-                    </div>
-                    <div class="grid sm:grid-cols-2 gap-3">
-                        <div>
-                            <label class="text-sm text-slate-300">Зургийн URL (сонголттой)</label>
-                            <input id="p-image" type="text" placeholder="https://..."
-                                class="mt-1 w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 placeholder-slate-400 focus:ring-2 focus:ring-emerald-500 outline-none transition">
-                        </div>
-                        <div>
-                            <label class="text-sm text-slate-300">Чөлөөт огноо (сонголттой)</label>
-                            <input id="p-dates" type="text" placeholder="2025-01-05, 2025-01-12"
-                                class="mt-1 w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 placeholder-slate-400 focus:ring-2 focus:ring-emerald-500 outline-none transition">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-sm text-slate-300">Байршил</label>
-                        <input id="p-location" type="text" placeholder="Central UB"
-                            class="mt-1 w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 placeholder-slate-400 focus:ring-2 focus:ring-emerald-500 outline-none transition">
-                    </div>
-                </div>
-
-                <button type="button" id="provider-btn"
-                    class="w-full mt-2 py-3 rounded-lg bg-amber-500 hover:bg-amber-600 font-semibold transition-transform hover:scale-[1.02] active:scale-[0.98]">
-                    Үйлчилгээ бүртгүүлэх
-                </button>
-            </div>
-
-            <!-- DASHBOARD -->
-            <div id="dashboard" class="hidden space-y-4 mt-4">
-                <div class="bg-white/10 border border-white/10 rounded-lg p-4">
-                    <h2 class="text-lg font-semibold text-white">Тавтай морил 👋</h2>
-                    <p class="text-slate-300">
-                        Хэрэглэгч:
-                        <span id="user-identifier" class="text-indigo-300 font-medium"></span>
-                    </p>
-                </div>
-
-                <div class="bg-white/10 border border-white/10 rounded-lg p-4">
-                    <h3 class="font-medium mb-2">Нэвтрэх түүх</h3>
-                    <ul id="history" class="text-sm text-slate-300 space-y-1"></ul>
-                </div>
-
-                <button type="button" id="logout-btn"
-                    class="w-full py-3 rounded-lg bg-rose-500 hover:bg-rose-600 font-semibold transition">
-                    Гарах
-                </button>
-            </div>
-
-        </div>        
+<div class="container">
+  <div class="card">
+    <div class="logo">
+      <h1>Event Planner</h1>
+      <p>Таны тэмдэглэлт өдрийг ухаалгаар төлөвлөнө</p>
     </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('login')">Нэвтрэх</button>
+      <button class="tab" onclick="showTab('register')">Бүртгүүлэх</button>
+    </div>
+
+    <div id="error-container"></div>
+    <div id="success-container"></div>
+
+    <!-- LOGIN -->
+    <div id="loginForm" class="tab-content active">
+      <div class="form-group">
+        <input id="login-identifier" class="input" placeholder="И-мэйл эсвэл утасны дугаар">
+      </div>
+      <div class="form-group">
+        <input id="login-password" type="password" class="input" placeholder="Нууц үг">
+      </div>
+      <button class="btn" onclick="login()">Нэвтрэх</button>
+      
+      <div class="info-text">
+        Нэвтрэх эрхгүй юу? <a href="#" onclick="showTab('register'); return false;">Бүртгүүлэх</a>
+      </div>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="registerForm" class="tab-content">
+      <div class="form-group">
+        <input id="reg-identifier" class="input" placeholder="И-мэйл эсвэл утасны дугаар">
+      </div>
+      <div class="form-group">
+        <input id="reg-password" type="password" class="input" placeholder="Нууц үг (хамгийн багадаа 6 тэмдэгт)">
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" id="is-provider" class="checkbox">
+        <label for="is-provider" class="checkbox-label">
+          Би үйлчилгээ үзүүлэгч бүртгүүлэх
+        </label>
+      </div>
+      <button class="btn" onclick="register()">Бүртгүүлэх</button>
+      
+      <div class="info-text">
+        Аль хэдийн бүртгэлтэй юу? <a href="#" onclick="showTab('login'); return false;">Нэвтрэх</a>
+      </div>
+    </div>
+
+  </div>
 </div>
 
-<script src="/static/app.js"></script>
+<script>
+// Theme management
+function initTheme() {
+  const savedTheme = localStorage.getItem('theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  updateThemeIcon(savedTheme);
+}
+
+function toggleTheme() {
+  const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  
+  document.documentElement.setAttribute('data-theme', newTheme);
+  localStorage.setItem('theme', newTheme);
+  updateThemeIcon(newTheme);
+}
+
+function updateThemeIcon(theme) {
+  const icon = document.getElementById('theme-icon');
+  if (icon) {
+    icon.textContent = theme === 'dark' ? '🌙' : '☀️';
+  }
+}
+
+// Initialize theme on page load
+initTheme();
+
+// Create floating particles
+function createParticles() {
+  const container = document.getElementById('particles');
+  for (let i = 0; i < 20; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    particle.style.left = Math.random() * 100 + '%';
+    particle.style.animationDelay = Math.random() * 15 + 's';
+    particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+    container.appendChild(particle);
+  }
+}
+
+createParticles();
+
+function showTab(tabName) {
+  // Update tab buttons
+  document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+  event.target.classList.add('active');
+  
+  // Update tab content
+  document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+  document.getElementById(tabName + 'Form').classList.add('active');
+  
+  // Clear messages
+  clearMessages();
+}
+
+function showError(message) {
+  const container = document.getElementById('error-container');
+  container.innerHTML = `<div class="error-message">${message}</div>`;
+}
+
+function showSuccess(message) {
+  const container = document.getElementById('success-container');
+  container.innerHTML = `<div class="success-message">${message}</div>`;
+}
+
+function clearMessages() {
+  document.getElementById('error-container').innerHTML = '';
+  document.getElementById('success-container').innerHTML = '';
+}
+
+async function login() {
+  clearMessages();
+  
+  const identifier = document.getElementById("login-identifier").value.trim();
+  const password = document.getElementById("login-password").value;
+  
+  if (!identifier || !password) {
+    showError("Бүх талбарыг бөглөнө үү");
+    return;
+  }
+  
+  const btn = event.target;
+  btn.classList.add('loading');
+  
+  try {
+    const res = await fetch("/login", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      credentials: "include",
+      body: JSON.stringify({ identifier, password })
+    });
+    
+    const data = await res.json();
+    
+    if (res.ok) {
+      showSuccess("Амжилттай нэвтэрлээ! 🎉");
+      setTimeout(() => {
+        if (data.user_type === 'provider') {
+          location.href = "/provider-register";
+        } else {
+          location.href = "/search";
+        }
+      }, 1000);
+    } else {
+      showError(data.error || "Нэвтрэх явцад алдаа гарлаа");
+    }
+  } catch (error) {
+    showError("Сервертэй холбогдоход алдаа гарлаа");
+  } finally {
+    btn.classList.remove('loading');
+  }
+}
+
+async function register() {
+  clearMessages();
+  
+  const identifier = document.getElementById("reg-identifier").value.trim();
+  const password = document.getElementById("reg-password").value;
+  const isProvider = document.getElementById("is-provider").checked;
+  
+  if (!identifier || !password) {
+    showError("Бүх талбарыг бөглөнө үү");
+    return;
+  }
+  
+  if (password.length < 6) {
+    showError("Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой");
+    return;
+  }
+  
+  const btn = event.target;
+  btn.classList.add('loading');
+  
+  try {
+    const res = await fetch("/register", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      credentials: "include",
+      body: JSON.stringify({
+        identifier,
+        password,
+        user_type: isProvider ? 'provider' : 'user'
+      })
+    });
+    
+    const data = await res.json();
+    
+    if (res.ok) {
+      showSuccess("Амжилттай бүртгэгдлээ! 🎉");
+      setTimeout(() => {
+        if (isProvider) {
+          location.href = "/provider-register";
+        } else {
+          location.href = "/search";
+        }
+      }, 1000);
+    } else {
+      showError(data.error || "Бүртгэх явцад алдаа гарлаа");
+    }
+  } catch (error) {
+    showError("Сервертэй холбогдоход алдаа гарлаа");
+  } finally {
+    btn.classList.remove('loading');
+  }
+}
+
+document.addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    const activeTab = document.querySelector('.tab-content.active');
+    if (activeTab.id === 'loginForm') {
+      login();
+    } else {
+      register();
+    }
+  }
+});
+</script>
+
 </body>
 </html>

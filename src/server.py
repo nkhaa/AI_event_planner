@@ -1,136 +1,170 @@
-from flask import Flask, request, jsonify, render_template
+# src/server.py
+from flask import Flask, request, jsonify, render_template, session
 from flask_cors import CORS
+from src.db import get_db, init_db
+from src.auth import register_user, login_user, logout_user, get_current_user
+from src.providers import (register_provider, get_provider_by_id, get_my_providers,
+                           update_provider, delete_provider)
+import os
 
-from src.auth import register, login
-from src.history import get_login_history
-from src.errors import ValidationError, NotFoundError
-from src.db import init_db
-from src.providers import create_provider, save_provider, register_provider
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 app = Flask(
     __name__,
-    template_folder="../templates",
-    static_folder="../static",
-    static_url_path="/static",
+    template_folder=os.path.join(BASE_DIR, "templates"),
+    static_folder=os.path.join(BASE_DIR, "static")
 )
 
-CORS(app)
+# Secret key for sessions
+app.secret_key = 'your-secret-key-change-this-in-production'
+CORS(app, supports_credentials=True)
 
-# Initialize DB (DEV / TEST)
-init_db()
-
-
-# ========== CORS ==========
-@app.after_request
-def after_request(response):
-    response.headers.add("Access-Control-Allow-Origin", "*")
-    response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
-    response.headers.add("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS")
-    return response
-
-
-@app.before_request
-def handle_preflight():
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
-
-
-# ========== ERROR HANDLERS ==========
-@app.errorhandler(ValidationError)
-@app.errorhandler(NotFoundError)
-def handle_custom_error(e):
-    return jsonify({"status": "error", "message": str(e)}), 400
-
-
-@app.errorhandler(404)
-def handle_404(e):
-    return jsonify({"status": "error", "message": "Энд олдсонгүй"}), 404
-
-
-@app.errorhandler(Exception)
-def handle_exception(e):
-    return jsonify({"status": "error", "message": str(e)}), 500
-
-
-# ========== UI ==========
-@app.get("/")
-def home():
+# ---- PAGE ROUTES ----
+@app.route("/")
+def index():
     return render_template("index.html")
 
+@app.route("/dashboard")
+def dashboard():
+    user = get_current_user()
+    if not user:
+        return render_template("index.html")
+    return render_template("dashboard.html")
 
-# ========== PROVIDER REGISTER ==========
-@app.post("/api/providers/register")
-def api_provider_register():
-    try:
-        data = request.get_json(silent=True) or {}
-        provider = register_provider(
-            name=data.get("name"),
-            capacity=data.get("capacity"),
-            price=data.get("price"),
-            packages=data.get("packages"),
-            image_url=data.get("image_url"),
-            available_dates=data.get("available_dates"),
-            location=data.get("location"),
-        )
+@app.route("/provider-register")
+def provider_register_page():
+    user = get_current_user()
+    if not user:
+        return render_template("index.html")
+    return render_template("provider.html")
 
-        save_provider(provider)
-        return jsonify({"message": "Үйлчилгээ амжилттай бүртгэгдлээ"}), 201
-    except ValidationError as e:
-        return jsonify({"status": "error", "message": str(e)}), 400
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+@app.route("/search")
+def search_page():
+    return render_template("search.html")
 
+# ---- AUTH ROUTES ----
+@app.route("/register", methods=["POST"])
+def register():
+    return register_user()
 
-# ========== USER REGISTER ==========
-@app.post("/register")
-def api_register():
-    try:
-        data = request.get_json(silent=True) or {}
-        identifier = data.get("identifier") or data.get("email")
+@app.route("/login", methods=["POST"])
+def login():
+    return login_user()
 
-        if not identifier or "password" not in data:
-            raise ValidationError("Имэйл эсвэл утас, нууц үг шаардлагатай")
+@app.route("/logout", methods=["POST"])
+def logout():
+    return logout_user()
 
-        result = register(identifier, data["password"])
-        return jsonify({"status": "ok", **result})
-    except ValidationError as e:
-        return jsonify({"status": "error", "message": str(e)}), 400
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 400
+@app.route("/api/current-user")
+def current_user():
+    user = get_current_user()
+    if user:
+        return jsonify(user)
+    return jsonify({"error": "Not authenticated"}), 401
 
+# ---- PROVIDER ROUTES ----
+@app.route("/api/providers/register", methods=["POST"])
+def provider_register():
+    return register_provider()
 
-# ========== LOGIN ==========
-@app.post("/login")
-def api_login():
-    try:
-        data = request.get_json(silent=True) or {}
-        identifier = data.get("identifier") or data.get("email")
+@app.route("/api/providers/<int:provider_id>")
+def provider_detail(provider_id):
+    return get_provider_by_id(provider_id)
 
-        if not identifier or "password" not in data:
-            raise ValidationError("Имэйл эсвэл утас, нууц үг шаардлагатай")
+@app.route("/api/providers/my")
+def my_providers():
+    return get_my_providers()
 
-        return jsonify(login(identifier, data["password"]))
-    except ValidationError as e:
-        return jsonify({"status": "error", "message": str(e)}), 400
-    except NotFoundError as e:
-        return jsonify({"status": "error", "message": str(e)}), 404
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 400
+@app.route("/api/providers/<int:provider_id>", methods=["PUT"])
+def provider_update(provider_id):
+    return update_provider(provider_id)
 
+@app.route("/api/providers/<int:provider_id>", methods=["DELETE"])
+def provider_delete(provider_id):
+    return delete_provider(provider_id)
 
-# ========== LOGIN HISTORY ==========
-@app.get("/history/<identifier>")
-def api_history(identifier):
-    history = get_login_history(identifier)
+# ---- SEARCH ROUTES ----
+@app.route("/api/providers/search")
+def search_providers():
+    location = request.args.get("location", "")
+    min_price = request.args.get("min_price", 0)
+    max_price = request.args.get("max_price", 999999999)
+    capacity = request.args.get("capacity", 0)
+    event_type = request.args.get("event_type", "")
 
-    return jsonify([
-        {
-            "timestamp": h[2],
-            "success": "Амжилттай" if h[1] == 1 else "Амжилтгүй"
-        }
-        for h in history
-    ])
+    conn = get_db()
+    cur = conn.cursor()
 
+    query = """
+        SELECT * FROM providers
+        WHERE location LIKE ?
+        AND price BETWEEN ? AND ?
+        AND capacity >= ?
+    """
+    
+    params = [f"%{location}%", min_price, max_price, capacity]
+    
+    if event_type:
+        query += " AND packages LIKE ?"
+        params.append(f"%{event_type}%")
+    
+    query += " ORDER BY rating DESC, total_bookings DESC"
+    
+    cur.execute(query, params)
+    results = [dict(row) for row in cur.fetchall()]
+    
+    return jsonify(results)
+
+# ---- STATS ROUTES ----
+@app.route("/api/stats")
+def stats():
+    user = get_current_user()
+    if not user:
+        return jsonify({"error": "Нэвтэрч орно уу"}), 401
+    
+    conn = get_db()
+    cur = conn.cursor()
+    
+    if user['user_type'] == 'provider':
+        # Provider stats
+        cur.execute("""
+            SELECT COUNT(*) as total_providers 
+            FROM providers 
+            WHERE user_id = ?
+        """, (user['user_id'],))
+        providers_count = cur.fetchone()[0]
+        
+        cur.execute("""
+            SELECT COUNT(*) as total_bookings
+            FROM bookings b
+            JOIN providers p ON b.provider_id = p.id
+            WHERE p.user_id = ?
+        """, (user['user_id'],))
+        bookings_count = cur.fetchone()[0]
+        
+        return jsonify({
+            "total_providers": providers_count,
+            "total_bookings": bookings_count,
+            "user_type": "provider"
+        })
+    else:
+        # User stats
+        cur.execute("""
+            SELECT COUNT(*) as total_bookings
+            FROM bookings
+            WHERE user_id = ?
+        """, (user['user_id'],))
+        bookings_count = cur.fetchone()[0]
+        
+        cur.execute("SELECT COUNT(*) as total_providers FROM providers")
+        providers_count = cur.fetchone()[0]
+        
+        return jsonify({
+            "total_bookings": bookings_count,
+            "total_providers": providers_count,
+            "user_type": "user"
+        })
 
 if __name__ == "__main__":
-    app.run(port=5000, debug=True)
+    init_db()
+    app.run(debug=True, port=4890)

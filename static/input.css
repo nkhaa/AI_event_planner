@@ -1,3 +1,78 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+  .input {
+    @apply w-full px-4 py-3 rounded-md bg-slate-900/40 border border-white/10 text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition;
+  }
+
+  .btn-indigo {
+    @apply w-full py-3 rounded-md bg-indigo-500 hover:bg-indigo-600 text-white font-medium shadow-lg shadow-indigo-500/30 transition;
+  }
+
+  .btn-emerald {
+    @apply w-full py-3 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white font-medium shadow-lg shadow-emerald-500/30 transition;
+  }
+
+  .btn-amber {
+    @apply w-full py-3 rounded-md bg-amber-500 hover:bg-amber-600 text-slate-900 font-medium shadow-lg shadow-amber-500/30 transition;
+  }
+
+  .btn-rose {
+    @apply w-full py-3 rounded-md bg-rose-500 hover:bg-rose-600 text-white font-medium shadow-lg shadow-rose-500/30 transition;
+  }
+
+  .tab {
+    @apply text-sm font-medium text-slate-300 border-b-2 border-transparent hover:text-white hover:border-white/40 transition;
+  }
+
+  .tab.active {
+    @apply text-white border-indigo-500;
+  }
+
+  .tab-content {
+    @apply hidden;
+  }
+
+  .tab-content.active {
+    @apply block;
+  }
+
+  .message {
+    @apply text-sm rounded-md px-4 py-2 mt-2;
+  }
+
+  .card {
+    @apply bg-white/5 border border-white/10 rounded-2xl p-6;
+  }
+
+  .card-title {
+    @apply text-xl font-semibold mb-2;
+  }
+
+  .card-text {
+    @apply text-slate-400;
+  }
+
+  .sidebar-link {
+    @apply w-full text-left px-4 py-3 rounded-xl text-slate-300 hover:bg-white/10 transition;
+  }
+
+  .sidebar-link.active {
+    @apply bg-indigo-600 text-white font-semibold;
+  }
+
+  .stat-card {
+    @apply bg-white/5 border border-white/10 rounded-2xl p-6;
+  }
+
+  .stat-label {
+    @apply text-slate-400 text-sm;
+  }
+
+  .stat-value {
+    @apply text-3xl font-bold text-white mt-2;
+  }
+}
+

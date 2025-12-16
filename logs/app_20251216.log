@@ -1,0 +1,8 @@
+2025-12-16 22:26:16,119 - ERROR - name 'get_db' is not defined
+2025-12-16 22:27:00,824 - ERROR - name 'get_db' is not defined
+2025-12-16 22:28:06,677 - ERROR - NOT NULL constraint failed: users.kind
+2025-12-16 22:28:46,030 - ERROR - NOT NULL constraint failed: users.kind
+2025-12-16 22:29:11,022 - ERROR - no such column: kind
+2025-12-16 22:52:10,202 - ERROR - 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+2025-12-16 22:58:54,190 - ERROR - 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+2025-12-16 23:57:38,775 - ERROR - expected token 'end of print statement', got ':'

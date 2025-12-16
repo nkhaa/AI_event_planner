@@ -1,49 +1,61 @@
+# src/db.py
 import sqlite3
-import os
 
-# Absolute DB path
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "event.db")
-
+def get_db():
+    conn = sqlite3.connect("event.db")
+    conn.row_factory = sqlite3.Row
+    return conn
 
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
+    conn = get_db()
+    cur = conn.cursor()
 
-    # Drop tables (dev/test only)
-    cursor.execute("DROP TABLE IF EXISTS users")
-    cursor.execute("DROP TABLE IF EXISTS login_history")
-    cursor.execute("DROP TABLE IF EXISTS providers")
-
-    cursor.execute("""
-        CREATE TABLE users (
-            identifier TEXT PRIMARY KEY,
-            kind TEXT NOT NULL,
-            password TEXT NOT NULL
-        )
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        identifier TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        user_type TEXT DEFAULT 'user',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
     """)
 
-    cursor.execute("""
-        CREATE TABLE login_history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            identifier TEXT NOT NULL,
-            success INTEGER NOT NULL,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS providers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        name TEXT NOT NULL,
+        location TEXT NOT NULL,
+        capacity INTEGER NOT NULL,
+        price INTEGER NOT NULL,
+        packages TEXT,
+        image_url TEXT,
+        description TEXT,
+        contact_phone TEXT,
+        contact_email TEXT,
+        available_dates TEXT,
+        rating REAL DEFAULT 0,
+        total_bookings INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES users(id)
+    )
     """)
 
-    cursor.execute("""
-        CREATE TABLE providers (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            capacity INTEGER NOT NULL,
-            price INTEGER NOT NULL,
-            packages TEXT,
-            image_url TEXT,
-            available_dates TEXT,
-            location TEXT NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS bookings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        provider_id INTEGER NOT NULL,
+        event_date DATE NOT NULL,
+        event_type TEXT,
+        guests_count INTEGER,
+        status TEXT DEFAULT 'pending',
+        total_price INTEGER,
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES users(id),
+        FOREIGN KEY(provider_id) REFERENCES providers(id)
+    )
     """)
 
     conn.commit()
