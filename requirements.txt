@@ -2,3 +2,6 @@ pytest
 pytest-cov
 python-dotenv
 requests
+Flask
+flask-cors
+flask-cors

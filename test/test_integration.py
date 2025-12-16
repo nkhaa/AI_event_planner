@@ -3,7 +3,7 @@ from src.history import get_login_history
 from src.db import init_db
 
 def test_full_login_flow():
-    init_db()
+    init_db()  # Explicitly initialize database for test
 
     # 1. Register
     reg = register("miho@example.com", "12345")

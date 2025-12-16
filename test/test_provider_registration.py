@@ -1,5 +1,6 @@
 import pytest
 from src.providers import register_provider, Provider
+from src.errors import ValidationError
 
 def test_register_provider_success():
     provider = register_provider(
@@ -15,7 +16,8 @@ def test_register_provider_success():
 
 
 def test_register_provider_invalid_capacity():
-    with pytest.raises(ValueError):
+    # Changed from ValueError to ValidationError
+    with pytest.raises(ValidationError):
         register_provider(
             name="Test Hall",
             capacity="two hundred",
