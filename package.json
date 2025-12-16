@@ -1,0 +1,29 @@
+{
+  "name": "ai-event-planner",
+  "version": "1.0.0",
+  "description": "Энэ бол миний Программ хангамж хөгжүүлэлтийн процесс хичээлийн анхны төсөл. Энэ төслөөр бид Scrum аргачлалыг дагаж, жижиг веб аппликейшн хөгжүүлэх болно. # Өөрчилсөн/шинэ файлуудаа \"stage\" хийх (бэлтгэх) git add README.md # Өөрчлөлтүүдээ \"commit\" хийх (тэмдэглэгээ үүсгэх) сэтгэгдэл бичих git commit -m \"Анхны README файлыг нэмэв\" # Өөрчлөлтүүдээ GitHub руу \"push\" хийх (илгээх)",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nkhaa/AI_event_planner.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/nkhaa/AI_event_planner/issues"
+  },
+  "homepage": "https://github.com/nkhaa/AI_event_planner#readme",
+  "devDependencies": {
+    "autoprefixer": "^10.4.23",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.19"
+  }
+}
