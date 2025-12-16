@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8">
+  <title>Хайлт | AI Event Planner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #f97316;
+      --primary-dark: #ea580c;
+      --secondary: #fbbf24;
+      --dark: #0c1222;
+      --dark-soft: #1a2332;
+      --dark-lighter: #2a3442;
+      --light: #f8fafc;
+      --text-light: #cbd5e1;
+      --text-lighter: #94a3b8;
+    }
+
+    /* Light theme colors */
+    [data-theme="light"] {
+      --dark: #f8fafc;
+      --dark-soft: #ffffff;
+      --dark-lighter: #f1f5f9;
+      --light: #0f172a;
+      --text-light: #334155;
+      --text-lighter: #64748b;
+    }
+
+    body {
+      font-family: 'Source Sans Pro', sans-serif;
+      background: var(--dark);
+      color: var(--light);
+      min-height: 100vh;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* Navigation */
+    nav {
+      background: rgba(26, 35, 50, 0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(249, 115, 22, 0.2);
+      padding: 20px 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo-nav {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .nav-link {
+      color: var(--text-light);
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.3s ease;
+      font-size: 15px;
+    }
+
+    .nav-link:hover {
+      color: var(--primary);
+    }
+
+    .btn-logout {
+      padding: 10px 24px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 8px;
+      color: #fca5a5;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      font-size: 14px;
+    }
+
+    .btn-logout:hover {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: rgba(239, 68, 68, 0.5);
+    }
+
+    /* Theme toggle */
+    .theme-toggle {
+      width: 40px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(249, 115, 22, 0.2);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .theme-toggle:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: var(--primary);
+      transform: rotate(180deg);
+    }
+
+    /* Main content */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 48px;
+      animation: fadeIn 0.8s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 48px;
+      font-weight: 900;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero p {
+      color: var(--text-lighter);
+      font-size: 18px;
+    }
+
+    /* Search section */
+    .search-section {
+      background: rgba(26, 35, 50, 0.6);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(249, 115, 22, 0.2);
+      border-radius: 20px;
+      padding: 32px;
+      margin-bottom: 40px;
+      animation: slideUp 0.8s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .search-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .search-input {
+      padding: 14px 18px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(249, 115, 22, 0.2);
+      border-radius: 10px;
+      color: var(--light);
+      font-size: 15px;
+      font-family: 'Source Sans Pro', sans-serif;
+      transition: all 0.3s ease;
+    }
+
+    .search-input:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+    }
+
+    .search-input::placeholder {
+      color: var(--text-lighter);
+    }
+
+    .btn-search {
+      padding: 14px 32px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'Source Sans Pro', sans-serif;
+      box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+    }
+
+    .btn-search:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(249, 115, 22, 0.5);
+    }
+
+    /* Results section */
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .results-count {
+      font-size: 18px;
+      color: var(--text-light);
+    }
+
+    .results-count strong {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 24px;
+    }
+
+    .provider-card {
+      background: rgba(26, 35, 50, 0.6);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(249, 115, 22, 0.15);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      animation: fadeInCard 0.6s ease;
+      animation-fill-mode: both;
+    }
+
+    .provider-card:hover {
+      transform: translateY(-8px);
+      border-color: rgba(249, 115, 22, 0.4);
+      box-shadow: 0 12px 32px rgba(249, 115, 22, 0.2);
+    }
+
+    @keyframes fadeInCard {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .card-image {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+      background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(251, 191, 36, 0.2));
+    }
+
+    .card-content {
+      padding: 24px;
+    }
+
+    .card-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--light);
+    }
+
+    .card-location {
+      color: var(--text-lighter);
+      font-size: 14px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .card-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .info-item {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid rgba(249, 115, 22, 0.1);
+    }
+
+    .info-label {
+      font-size: 12px;
+      color: var(--text-lighter);
+      margin-bottom: 4px;
+    }
+
+    .info-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .card-packages {
+      background: rgba(249, 115, 22, 0.1);
+      border: 1px solid rgba(249, 115, 22, 0.2);
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 16px;
+    }
+
+    .packages-title {
+      font-size: 12px;
+      color: var(--text-lighter);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .packages-text {
+      font-size: 14px;
+      color: var(--text-light);
+      line-height: 1.5;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--text-lighter);
+    }
+
+    .empty-state svg {
+      width: 120px;
+      height: 120px;
+      margin-bottom: 24px;
+      opacity: 0.3;
+    }
+
+    .empty-state h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      margin-bottom: 12px;
+      color: var(--text-light);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-light);
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 3px solid rgba(249, 115, 22, 0.2);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 36px;
+      }
+
+      .search-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .results-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .nav-links {
+        gap: 12px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<nav>
+  <div class="nav-container">
+    <div class="logo-nav">Event Planner</div>
+    <div class="nav-links">
+      <a href="/dashboard" class="nav-link">Хяналтын самбар</a>
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+        <span id="theme-icon">🌙</span>
+      </button>
+      <a href="#" onclick="logout(); return false;" class="btn-logout">Гарах</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="hero">
+    <h1>Төгс газраа олоорой</h1>
+    <p>Тэмдэглэлт өдөртөө тохирсон үйлчилгээг хайж олоорой</p>
+  </div>
+
+  <div class="search-section">
+    <div class="search-grid">
+      <input 
+        type="text" 
+        id="location" 
+        class="search-input" 
+        placeholder="Байршил (жнь: Улаанбаатар)"
+      >
+      <input 
+        type="number" 
+        id="minPrice" 
+        class="search-input" 
+        placeholder="Хамгийн бага үнэ (₮)"
+        min="0"
+      >
+      <input 
+        type="number" 
+        id="maxPrice" 
+        class="search-input" 
+        placeholder="Хамгийн их үнэ (₮)"
+        min="0"
+      >
+      <input 
+        type="number" 
+        id="capacity" 
+        class="search-input" 
+        placeholder="Хүчин чадал (хүний тоо)"
+        min="0"
+      >
+    </div>
+    <button class="btn-search" onclick="searchProviders()">
+      🔍 Хайх
+    </button>
+  </div>
+
+  <div class="results-header">
+    <div class="results-count">
+      Олдсон үр дүн: <strong id="resultsCount">0</strong>
+    </div>
+  </div>
+
+  <div id="results" class="results-grid"></div>
+</div>
+
+<script>
+// Theme management
+function initTheme() {
+  const savedTheme = localStorage.getItem('theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  updateThemeIcon(savedTheme);
+}
+
+function toggleTheme() {
+  const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  
+  document.documentElement.setAttribute('data-theme', newTheme);
+  localStorage.setItem('theme', newTheme);
+  updateThemeIcon(newTheme);
+}
+
+function updateThemeIcon(theme) {
+  const icon = document.getElementById('theme-icon');
+  if (icon) {
+    icon.textContent = theme === 'dark' ? '🌙' : '☀️';
+  }
+}
+
+// Initialize theme on page load
+initTheme();
+
+async function searchProviders() {
+  const location = document.getElementById('location').value.trim();
+  const minPrice = document.getElementById('minPrice').value || 0;
+  const maxPrice = document.getElementById('maxPrice').value || 999999999;
+  const capacity = document.getElementById('capacity').value || 0;
+
+  const resultsDiv = document.getElementById('results');
+  resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Хайж байна...</p></div>';
+
+  try {
+    const params = new URLSearchParams({
+      location,
+      min_price: minPrice,
+      max_price: maxPrice,
+      capacity
+    });
+
+    const res = await fetch(`/api/providers/search?${params}`);
+    const providers = await res.json();
+
+    document.getElementById('resultsCount').textContent = providers.length;
+
+    if (providers.length === 0) {
+      resultsDiv.innerHTML = `
+        <div class="empty-state">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <h3>Үр дүн олдсонгүй</h3>
+          <p>Хайлтын нөхцлөө өөрчилж дахин оролдоно уу</p>
+        </div>
+      `;
+      return;
+    }
+
+    resultsDiv.innerHTML = providers.map((provider, index) => `
+      <div class="provider-card" style="animation-delay: ${index * 0.1}s" 
+           onclick="viewProvider(${provider.id})">
+        ${provider.image_url ? 
+          `<img src="${provider.image_url}" class="card-image" alt="${provider.name}">` :
+          `<div class="card-image"></div>`
+        }
+        <div class="card-content">
+          <h3 class="card-title">${provider.name}</h3>
+          <div class="card-location">
+            📍 ${provider.location}
+          </div>
+          <div class="card-info">
+            <div class="info-item">
+              <div class="info-label">Үнэ</div>
+              <div class="info-value">${formatPrice(provider.price)}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Хүчин чадал</div>
+              <div class="info-value">${provider.capacity} хүн</div>
+            </div>
+          </div>
+          ${provider.packages ? `
+            <div class="card-packages">
+              <div class="packages-title">БАГЦ ҮЙЛЧИЛГЭЭ</div>
+              <div class="packages-text">${provider.packages}</div>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `).join('');
+
+  } catch (error) {
+    resultsDiv.innerHTML = `
+      <div class="empty-state">
+        <h3>Алдаа гарлаа</h3>
+        <p>Серверт холбогдоход алдаа гарлаа. Дахин оролдоно уу.</p>
+      </div>
+    `;
+  }
+}
+
+function formatPrice(price) {
+  return new Intl.NumberFormat('mn-MN').format(price) + '₮';
+}
+
+function viewProvider(id) {
+  // In a real app, this would navigate to a detail page
+  alert(`Дэлгэрэнгүй мэдээлэл үзэх: Provider ID ${id}`);
+}
+
+async function logout() {
+  try {
+    await fetch('/logout', {
+      method: 'POST',
+      credentials: 'include'
+    });
+    location.href = '/';
+  } catch (error) {
+    console.error('Logout error:', error);
+    location.href = '/';
+  }
+}
+
+// Load all providers on page load
+window.addEventListener('load', () => {
+  searchProviders();
+});
+</script>
+
+</body>
+</html>
