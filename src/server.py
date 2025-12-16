@@ -3,8 +3,13 @@ from flask import Flask, request, jsonify, render_template, session
 from flask_cors import CORS
 from src.db import get_db, init_db
 from src.auth import register_user, login_user, logout_user, get_current_user
-from src.providers import (register_provider, get_provider_by_id, get_my_providers,
-                           update_provider, delete_provider)
+from src.providers import (
+    register_provider,
+    get_provider_by_id,
+    get_my_providers,
+    update_provider,
+    delete_provider
+)
 import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -15,11 +20,13 @@ app = Flask(
     static_folder=os.path.join(BASE_DIR, "static")
 )
 
-# Secret key for sessions
-app.secret_key = 'your-secret-key-change-this-in-production'
+# ✅ SECRET KEY (Railway-compatible)
+app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
+
+# ✅ CORS
 CORS(app, supports_credentials=True)
 
-# ---- PAGE ROUTES ----
+# ---------------- PAGE ROUTES ----------------
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -42,7 +49,7 @@ def provider_register_page():
 def search_page():
     return render_template("search.html")
 
-# ---- AUTH ROUTES ----
+# ---------------- AUTH ROUTES ----------------
 @app.route("/register", methods=["POST"])
 def register():
     return register_user()
@@ -62,7 +69,7 @@ def current_user():
         return jsonify(user)
     return jsonify({"error": "Not authenticated"}), 401
 
-# ---- PROVIDER ROUTES ----
+# ---------------- PROVIDER ROUTES ----------------
 @app.route("/api/providers/register", methods=["POST"])
 def provider_register():
     return register_provider()
@@ -83,7 +90,7 @@ def provider_update(provider_id):
 def provider_delete(provider_id):
     return delete_provider(provider_id)
 
-# ---- SEARCH ROUTES ----
+# ---------------- SEARCH ROUTES ----------------
 @app.route("/api/providers/search")
 def search_providers():
     location = request.args.get("location", "")
@@ -101,70 +108,25 @@ def search_providers():
         AND price BETWEEN ? AND ?
         AND capacity >= ?
     """
-    
     params = [f"%{location}%", min_price, max_price, capacity]
-    
+
     if event_type:
         query += " AND packages LIKE ?"
         params.append(f"%{event_type}%")
-    
-    query += " ORDER BY rating DESC, total_bookings DESC"
-    
+
     cur.execute(query, params)
     results = [dict(row) for row in cur.fetchall()]
-    
     return jsonify(results)
 
-# ---- STATS ROUTES ----
-@app.route("/api/stats")
-def stats():
-    user = get_current_user()
-    if not user:
-        return jsonify({"error": "Нэвтэрч орно уу"}), 401
-    
-    conn = get_db()
-    cur = conn.cursor()
-    
-    if user['user_type'] == 'provider':
-        # Provider stats
-        cur.execute("""
-            SELECT COUNT(*) as total_providers 
-            FROM providers 
-            WHERE user_id = ?
-        """, (user['user_id'],))
-        providers_count = cur.fetchone()[0]
-        
-        cur.execute("""
-            SELECT COUNT(*) as total_bookings
-            FROM bookings b
-            JOIN providers p ON b.provider_id = p.id
-            WHERE p.user_id = ?
-        """, (user['user_id'],))
-        bookings_count = cur.fetchone()[0]
-        
-        return jsonify({
-            "total_providers": providers_count,
-            "total_bookings": bookings_count,
-            "user_type": "provider"
-        })
-    else:
-        # User stats
-        cur.execute("""
-            SELECT COUNT(*) as total_bookings
-            FROM bookings
-            WHERE user_id = ?
-        """, (user['user_id'],))
-        bookings_count = cur.fetchone()[0]
-        
-        cur.execute("SELECT COUNT(*) as total_providers FROM providers")
-        providers_count = cur.fetchone()[0]
-        
-        return jsonify({
-            "total_bookings": bookings_count,
-            "total_providers": providers_count,
-            "user_type": "user"
-        })
-
+# ---------------- RUN APP ----------------
 if __name__ == "__main__":
     init_db()
-    app.run(debug=True, port=4890)
+
+    # ✅ Railway-compatible PORT
+    port = int(os.environ.get("PORT", 4890))
+
+    app.run(
+        host="0.0.0.0",
+        port=port,
+        debug=False
+    )

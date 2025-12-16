@@ -1,4 +1,4 @@
-name: Python CI
+name: Python CI + CD
 
 on:
   push:
@@ -28,3 +28,28 @@ jobs:
       - name: Run tests
         run: |
           pytest --cov=. --cov-report=term
+
+  deploy-staging:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop'
+
+    steps:
+      - name: Deploy to Staging
+        run: |
+          echo "🚀 Deploying to STAGING environment..."
+          # Railway / Render / VPS auto-deploy hook энд байна
+          # Ихэнхдээ GitHub hook ашигладаг тул echo байхад хангалттай
+
+
+  deploy-production:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+
+    steps:
+      - name: Deploy to Production
+        run: |
+          echo "🔥 Deploying to PRODUCTION environment..."
