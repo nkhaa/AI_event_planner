@@ -69,7 +69,6 @@ def current_user():
         return jsonify(user)
     return jsonify({"error": "Not authenticated"}), 401
 
-# ---------------- PROVIDER ROUTES ----------------
 @app.route("/api/providers/register", methods=["POST"])
 def provider_register():
     return register_provider()
