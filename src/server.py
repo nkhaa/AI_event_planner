@@ -53,6 +53,24 @@ def provider_stats():
     cur.execute("SELECT COUNT(*) FROM providers")
     count = cur.fetchone()[0]
     return jsonify({"total_providers": count}), 200
+@app.route("/api/stats", methods=["GET"])
+@require_auth
+def stats():
+    db = get_db()
+    cur = db.cursor()
+
+    # users count
+    cur.execute("SELECT COUNT(*) FROM users")
+    total_users = cur.fetchone()[0]
+
+    # providers count
+    cur.execute("SELECT COUNT(*) FROM providers")
+    total_providers = cur.fetchone()[0]
+
+    return jsonify({
+        "users": total_users,
+        "providers": total_providers
+    }), 200
 
 @app.route("/search")
 def search_page():
