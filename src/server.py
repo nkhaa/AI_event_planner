@@ -11,6 +11,7 @@ from src.providers import (
     delete_provider
 )
 import os
+from src.auth import require_auth
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -44,6 +45,14 @@ def provider_register_page():
     if not user:
         return render_template("index.html")
     return render_template("provider.html")
+@app.route("/api/stats/providers", methods=["GET"])
+@require_auth
+def provider_stats():
+    db = get_db()
+    cur = db.cursor()
+    cur.execute("SELECT COUNT(*) FROM providers")
+    count = cur.fetchone()[0]
+    return jsonify({"total_providers": count}), 200
 
 @app.route("/search")
 def search_page():
@@ -72,6 +81,15 @@ def current_user():
 @app.route("/api/providers/register", methods=["POST"])
 def provider_register():
     return register_provider()
+
+@app.route("/api/stats/users", methods=["GET"])
+@require_auth
+def user_stats():
+    db = get_db()
+    cur = db.cursor()
+    cur.execute("SELECT COUNT(*) FROM users")
+    count = cur.fetchone()[0]
+    return jsonify({"total_users": count}), 200
 
 @app.route("/api/providers/<int:provider_id>")
 def provider_detail(provider_id):

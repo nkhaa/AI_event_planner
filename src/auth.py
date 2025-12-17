@@ -3,6 +3,7 @@ from flask import request, jsonify, session
 from src.db import get_db
 from werkzeug.security import generate_password_hash, check_password_hash
 import re
+from functools import wraps
 
 def is_valid_identifier(identifier):
     """Validate email or phone number"""
@@ -88,3 +89,11 @@ def get_current_user():
             "user_type": session['user_type']
         }
     return None
+def require_auth(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        token = request.headers.get("Authorization")
+        if not token:
+            return jsonify({"error": "Unauthorized"}), 401
+        return f(*args, **kwargs)
+    return wrapper
