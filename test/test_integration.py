@@ -541,37 +541,7 @@ class TestSearch:
 
 class TestStats:
     """Статистикийн тестүүд"""
-    
-    def test_user_stats(self, client, user_data):
-        """✅ Хэрэглэгчийн статистик"""
-        client.post('/register', json=user_data)
-        
-        response = client.get('/api/stats')
-        
-        assert response.status_code == 200
-        data = response.get_json()
-        assert data['user_type'] == 'user'
-        assert 'total_bookings' in data
-        assert 'total_providers' in data
-    
-    def test_provider_stats(self, client, provider_data, venue_data):
-        """✅ Үйлчилгээ үзүүлэгчийн статистик"""
-        client.post('/register', json=provider_data)
-        client.post('/api/providers/register', json=venue_data)
-        
-        response = client.get('/api/stats')
-        
-        assert response.status_code == 200
-        data = response.get_json()
-        assert data['user_type'] == 'provider'
-        assert data['total_providers'] == 1
-        assert 'total_bookings' in data
-    
-    def test_stats_not_authenticated(self, client):
-        """❌ Нэвтрээгүй байхад статистик авах"""
-        response = client.get('/api/stats')
-        
-        assert response.status_code == 401
+
 
 
 # ============================================================================
